@@ -23,15 +23,17 @@ Skills are plain directories with a `SKILL.md`; any agent that supports the form
 load them. For the common agents:
 
 ```bash
-# Claude Code — personal skills
+# Easiest: clone straight into your agent's skills directory — updates are just `git pull`.
+# pi (recurses into subdirectories to find SKILL.md):
+git clone https://github.com/enclava-labs/enclava-dev-skills ~/.pi/agent/skills/enclava-dev-skills
+
+# Same idea for ~/.agents/skills/ (pi) or ~/.claude/skills/ (Claude Code, if your
+# version discovers nested skills):
+git clone https://github.com/enclava-labs/enclava-dev-skills ~/.agents/skills/enclava-dev-skills
+
+# Fallback: copy the skill dirs into any skills directory
 git clone https://github.com/enclava-labs/enclava-dev-skills /tmp/enclava-skills
 cp -r /tmp/enclava-skills/enclava /tmp/enclava-skills/enclava-verify /tmp/enclava-skills/enclava-concepts ~/.claude/skills/
-
-# pi / generic Agent Skills loaders (pi also reads ~/.pi/agent/skills/)
-cp -r /tmp/enclava-skills/enclava /tmp/enclava-skills/enclava-verify /tmp/enclava-skills/enclava-concepts ~/.agents/skills/
-
-# Or keep a checkout and symlink, so a `git pull` updates them:
-ln -s /tmp/enclava-skills/enclava ~/.claude/skills/enclava
 ```
 
 For agent managers with per-project skill directories, copy the skill folders into
