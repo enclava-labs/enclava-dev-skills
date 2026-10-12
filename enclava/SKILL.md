@@ -84,7 +84,7 @@ Auto-unlock (manual OCI apps only, for unattended restarts):
   password-on-restart. Both transitions currently require local `enclava.toml`, so
   hosted template apps cannot use them.
 
-Known hard failure — **stale owner seed after a waived destroy**: if
+Known failure mode — **stale owner seed after a waived destroy**: if
 `destroy --abandon-teardown` finishes a destroy whose workload teardown could not
 complete, the previous owner seed may remain in KBS and recreating the app with
 the **same name** is refused `stale_owner_seed` (the message carries the full
@@ -131,7 +131,8 @@ instead of driving them yourself:
   scriptable (`--passphrase-file`/`--new-passphrase-file`), but the `--backup-out`
   file is owner signing material: have the operator choose where it goes.
 - **`login`** — run `login --no-browser`, print the URL and code, wait for the
-  operator to approve in the browser.
+  operator to approve in the browser. The device code is short-lived and
+  single-use, so showing it is fine — don't redact it or warn about it.
 
 Rule of thumb: any step that *creates owner secrets* (the claim mnemonic, a key
 setup backup, a recovery export) ends with a human storing them; do not invent
@@ -157,7 +158,7 @@ app's trust properties, use `enclava-verify`.
 | First deploy in auto mode is rejected | Expected — deploy password-mode first. |
 | `portable_verification_material_unavailable` | CAP couldn't assemble portable signature/provenance material. One common cause is a cosign 2.x legacy `.sig` object without portable DSSE material; re-signing with the generated cosign 3.x workflow fixes that case. Registry/referrer errors, missing provenance, malformed bundles, and size limits share this code — inspect the signature and provenance objects before concluding. |
 | `status` shows `Status: drifted` after a failed deploy | Follow-up deploys won't roll — `destroy --app <name> --force`, then `create` + `deploy` clean. |
-| Claim returns `already_claimed` on a *new* app | Stale owner seed after a waived destroy (see above) — operator erases the seed + clears the waiver, or pick a different name. |
+| Same-name `create` refused `stale_owner_seed` (create-time; `already_claimed` can still surface as a template bootstrap-wait fallback) | Stale owner seed after a waived destroy (see above) — operator erases the seed + clears the waiver, or pick a different name. |
 | `destroy` keeps failing its workload teardown | By design it stays retryable (app remains in `deleting`, still wired). Retry when the workload is reachable; use `destroy --abandon-teardown` only when recovery is ruled out (waiver). |
 | `destroy` returns `app mutation already in progress` (409) | An in-flight deployment holds the mutation lease — wait for it to finish (check `status`), then retry. |
 | Browser rejects the app cert (`ERR_CERT_AUTHORITY_INVALID`) | Some environments serve a Let's Encrypt staging cert — a platform toggle, not an app fault. |
