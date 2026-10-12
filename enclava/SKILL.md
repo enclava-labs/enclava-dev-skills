@@ -84,11 +84,15 @@ Auto-unlock (manual OCI apps only, for unattended restarts):
   password-on-restart. Both transitions currently require local `enclava.toml`, so
   hosted template apps cannot use them.
 
-Known hard failure — **stale escrow**: if an app is destroyed while its pod was already
-dead, the key escrow survives; recreating an app with the **same name** inherits it —
-claim returns `already_claimed` and every unlock silently lands wrong-password
-(`TEE: locked`, no error). The fix is recovering with the *old* app's mnemonic, which
-still matches the surviving envelope.
+Known failure mode — **stale owner seed after a waived destroy**: if
+`destroy --abandon-teardown` finishes a destroy whose workload teardown could not
+complete, the previous owner seed may remain in KBS and recreating the app with
+the **same name** is refused `stale_owner_seed` (the message carries the full
+remediation). Remedies: the platform operator erases the stale seed and clears
+the recorded waiver, or choose a different app name. If the workload was already
+gone (or its teardown had completed), no waiver is recorded and recreation is
+unaffected. A destroy whose teardown cannot complete otherwise stays retryable by
+design — the app remains in the deleting state and stays wired.
 
 ## Command map (verified surface)
 
@@ -101,13 +105,38 @@ still matches the surviving envelope.
 | Config | `config set K=V…` (local `enclava.toml`; no `--app`), `config get` (names only), `config unset K` |
 | Templates | `template list`, `template deploy [slug] --name N [--ssh-public-key-file PATH]`, `template ssh-command --name N --wait [--json]` |
 | Ownership | `claim`, `unlock`, `recover`, `change-password`, `auto-unlock enable/disable` |
-| Lifecycle | `rollback [--to ID]`, `destroy [--app] [--force]` |
+| Lifecycle | `rollback [--to ID]`, `destroy [--app] [--force] [--abandon-teardown]` |
 | Identity | `signer set/rotate`, `org create/switch/invite/members/keyring`, `key status/backup/restore/setup/rotate-owner` |
 | Domains | `domains add/verify/list/remove` |
 
 Commands that expose `--app` can address a named hosted or manual app. Commands such
 as `create`, generic `deploy`, `config set`, and `auto-unlock` instead require local
 `enclava.toml`; check the selected journey before assuming `--app` exists.
+
+## Attended steps and handoffs
+
+Most commands run unattended (`init` takes deterministic defaults without a TTY,
+`prepare --yes`, `create`, `status`, redeploys with `--storage-password-file`,
+`unlock --password-file`, `recover --mnemonic-file --new-password-file`,
+`destroy --force`). Three steps need a human — hand over the **exact command**
+instead of driving them yourself:
+
+- **First deploy / `claim`** — always requires terminal stdin (the one-time
+  recovery mnemonic is delivered to that session; `--password-file`/
+  `--storage-password-file` only replace the password prompt and make recorded
+  output safe). Give the operator the deploy command to run in their shell; the
+  mnemonic auto-stores in the protected keystore — follow with `enclava key
+  backup --out <file>`.
+- **`key setup`** (fresh org, before the first `create`) — passphrase prompt is
+  scriptable (`--passphrase-file`/`--new-passphrase-file`), but the `--backup-out`
+  file is owner signing material: have the operator choose where it goes.
+- **`login`** — run `login --no-browser`, print the URL and code, wait for the
+  operator to approve in the browser. The device code is short-lived and
+  single-use, so showing it is fine — don't redact it or warn about it.
+
+Rule of thumb: any step that *creates owner secrets* (the claim mnemonic, a key
+setup backup, a recovery export) ends with a human storing them; do not invent
+unattended paths around that.
 
 ## Pick the journey
 
@@ -129,7 +158,8 @@ app's trust properties, use `enclava-verify`.
 | First deploy in auto mode is rejected | Expected — deploy password-mode first. |
 | `portable_verification_material_unavailable` | CAP couldn't assemble portable signature/provenance material. One common cause is a cosign 2.x legacy `.sig` object without portable DSSE material; re-signing with the generated cosign 3.x workflow fixes that case. Registry/referrer errors, missing provenance, malformed bundles, and size limits share this code — inspect the signature and provenance objects before concluding. |
 | `status` shows `Status: drifted` after a failed deploy | Follow-up deploys won't roll — `destroy --app <name> --force`, then `create` + `deploy` clean. |
-| Claim returns `already_claimed` on a *new* app | Stale escrow (see above) — recover with the old mnemonic. |
+| Same-name `create` refused `stale_owner_seed` (create-time; `already_claimed` can still surface as a template bootstrap-wait fallback) | Stale owner seed after a waived destroy (see above) — operator erases the seed + clears the waiver, or pick a different name. |
+| `destroy` keeps failing its workload teardown | By design it stays retryable (app remains in `deleting`, still wired). Retry when the workload is reachable; use `destroy --abandon-teardown` only when recovery is ruled out (waiver). |
 | `destroy` returns `app mutation already in progress` (409) | An in-flight deployment holds the mutation lease — wait for it to finish (check `status`), then retry. |
 | Browser rejects the app cert (`ERR_CERT_AUTHORITY_INVALID`) | Some environments serve a Let's Encrypt staging cert — a platform toggle, not an app fault. |
 | Unlock "did not complete" right after a deploy | The background unlock may still be running — trust `enclava status` over the CLI exit message. |
