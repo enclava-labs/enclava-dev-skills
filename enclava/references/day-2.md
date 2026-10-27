@@ -6,14 +6,15 @@ secret-handling rules live in the skill spine (`../SKILL.md`) — this file assu
 ## Status and triage
 
 ```bash
-enclava status [--app NAME]
+enclava status [--app NAME] [--json]
 ```
 
 Reads, in order of interest: `Status` (running / drifted / …), `TEE` (unlocked /
 locked), `Unlock`, and `tee_error`. `tee_error` is the in-guest startup failure reason
 from `enclava-init` — when a deploy stalls or an app won't come up, read it first; it
 states the cause without any cluster access. The spine's triage table maps the common
-values.
+values. `--json` prints the same facts in a stable shape (`null` means not verified) —
+prefer it for scripted checks.
 
 ## Logs (tenant-encrypted; needs a one-time ceremony)
 
@@ -63,7 +64,11 @@ enclava rollback --app NAME [--to DEPLOYMENT_ID]   # defaults to previous deploy
 enclava destroy --app NAME [--force]
 ```
 
-- `destroy` asks for confirmation unless `--force`.
+- `rollback` without `--to` asks for confirmation of the default (previous)
+  deployment; unattended runs pass `--to <deployment-id>`.
+- `destroy` asks for double confirmation (yes/no, then type the app name) unless
+  `--force` — agents pass `--force` only on explicit user instruction (spine's
+  automation contract).
 - **Busy 409** (`app mutation already in progress`): an in-flight deployment holds the
   app's mutation lease. Not an error to fix — wait for it to settle (watch `status`),
   then retry. On hosted, a queued destroy may also complete on its own after the

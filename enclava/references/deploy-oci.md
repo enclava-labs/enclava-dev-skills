@@ -17,8 +17,8 @@ enclava init        # prompts for name/port when interactive; --app-name/--port 
                     # non-interactively (piped stdin takes the directory name and
                     # EXPOSE/3000). Validates the app name before writing anything.
 enclava prepare     # same scaffolding; --yes skips the update-existing-files
-                    # confirmation (a non-TTY run without --yes still exits
-                    # "not a terminal"). In CI: run it once, commit both files,
+                    # confirmation (a non-interactive run without --yes refuses
+                    # and names the flag). In CI: run it once, commit both files,
                     # and don't re-run over them.
 ```
 
@@ -190,9 +190,9 @@ enclava deploy \
 ```
 
 - `--storage-password-file` makes the first deploy **claim ownership and unlock
-  without a password prompt** (create the file with tight permissions; never pass the password
-  inline) — the session must still be attended: fully unattended (no terminal stdin)
-  claims are refused until response-loss recovery exists. Without the flag,
+  fully unattended** (create the file with tight permissions; never pass the password
+  inline) — the one-time recovery mnemonic is written to the protected local keystore
+  (never printed), so run `enclava key backup` right after. Without the flag,
   `deploy` prompts for the password, or the user runs
   `enclava claim` separately.
 - The recovery mnemonic is persisted to the protected local keystore so `enclava key backup`

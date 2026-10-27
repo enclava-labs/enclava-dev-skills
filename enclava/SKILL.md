@@ -58,10 +58,9 @@ Password mode (the default):
 
 - **First deploy** waits for the TEE bootstrap endpoint, then the owner **claims**
   ownership: sets a password; the BIP39 mnemonic is persisted to the protected
-  local keystore (never printed). With `deploy --storage-password-file PATH` this
-  happens automatically — no prompt, but the session must still be attended
-  (terminal stdin); fully unattended claims are refused until response-loss
-  recovery exists.
+  local keystore (never printed). With `deploy --storage-password-file PATH` (or
+  `claim --password-file`) this is fully unattended — run `enclava key backup` right
+  after so the recovery material has a durable copy.
 - **Every restart** boots to `locked`; unlock it with the password
   (`enclava unlock [--app NAME]`, prompted or `--password-file`). On the manual OCI path, a complete
   redeploy command can instead supply the same `--storage-password-file`.
@@ -98,14 +97,15 @@ design — the app remains in the deleting state and stays wired.
 
 | Area | Commands |
 | --- | --- |
-| Auth | Hosted/device flow: `login [--api-url] [--no-browser] [--org] [--approve-logs]`, `whoami`, `logout`. Standalone CAP only: `signup`, `login --nostr`, `login --email`. |
-| Scaffold | `init [--app-name NAME] [--port PORT]` (prompts when interactive; validates the name — leading letter, `[a-z0-9-]`, no consecutive hyphens, ≤63 — before writing anything), `prepare [--yes]` (`--yes` skips the update-existing-files confirmation; without it a non-TTY run fails "not a terminal") |
+| Auth | Hosted/device flow: `login [--api-url] [--no-browser] [--org] [--approve-logs] [--replace-session]`, `whoami`, `logout`. Standalone CAP only: `signup`, `login --nostr`, `login --email` (their credential prompts have flag forms — `--email-address`/`--password-file`, `--npub`/`--nsec-file`; `--email` and `--nostr` are mutually exclusive). |
+| Scaffold | `init [--app-name NAME] [--port PORT]` (prompts when interactive; validates the name — leading letter, `[a-z0-9-]`, no consecutive hyphens, ≤63 — before writing anything), `prepare [--yes]` (`--yes` skips the update-existing-files confirmation; without it a non-interactive run refuses and names `--yes`) |
 | Deploy | `create [--image] [--signer-subject] [--signer-issuer]`, `deploy --image IMG@DIGEST [--set K=V] [--set-file K=PATH] [--storage-password-file PATH]` |
-| Observe | `status [--app]`, `logs [--app] [-f] [--log-private-key-file PATH]`, `log-key generate/list/select/revoke` |
+| Observe | `status [--app] [--json]`, `logs [--app] [-f] [--log-private-key-file PATH]`, `log-key generate/list/select/revoke` |
 | Config | `config set K=V…` (local `enclava.toml`; no `--app`), `config get` (names only), `config unset K` |
 | Templates | `template list`, `template deploy [slug] --name N [--ssh-public-key-file PATH]`, `template ssh-command --name N --wait [--json]` |
 | Ownership | `claim`, `unlock`, `recover`, `change-password`, `auto-unlock enable/disable` |
-| Lifecycle | `rollback [--to ID]`, `destroy [--app] [--force] [--abandon-teardown]` |
+| Lifecycle | `rollback [--to ID]` (without `--to` it confirms the default target), `destroy [--app] [--force] [--abandon-teardown]` |
+| Global | `--no-input` (env `ENCLAVA_NO_INPUT`) on any command: never prompt — take defaults or fail naming the flag that replaces the prompt |
 | Identity | `signer set/rotate`, `org create/switch/invite/members/keyring`, `key status/backup/restore/setup/rotate-owner` |
 | Domains | `domains add/verify/list/remove` |
 
@@ -113,26 +113,39 @@ Commands that expose `--app` can address a named hosted or manual app. Commands 
 as `create`, generic `deploy`, `config set`, and `auto-unlock` instead require local
 `enclava.toml`; check the selected journey before assuming `--app` exists.
 
+## Automation contract (agents)
+
+- **Run unattended commands with `--no-input`** (or `ENCLAVA_NO_INPUT=1` in the
+  environment): nothing may stop at a prompt. A prompted command either takes
+  deterministic defaults (`init`) or fails naming the flag that replaces the prompt
+  (e.g. `pass --force to destroy without confirmation`) — read that message and use
+  the flag it names.
+- **Every interactive input has a flag alternative**; secrets come from `--*-file`
+  paths, never process arguments.
+- **Read state with `enclava status [--app] --json`** (stable shape; `null` means
+  "not verified", never a verified-looking value).
+- **`destroy --force` only on explicit user instruction.** `destroy` deletes the
+  app's data volumes; its default double confirmation (yes/no, then type the app
+  name) exists to stop accidents. Never add `--force` on your own initiative.
+
 ## Attended steps and handoffs
 
-Most commands run unattended (`init` takes deterministic defaults without a TTY,
-`prepare --yes`, `create`, `status`, redeploys with `--storage-password-file`,
-`unlock --password-file`, `recover --mnemonic-file --new-password-file`,
-`destroy --force`). Three steps need a human — hand over the **exact command**
-instead of driving them yourself:
+Most commands run fully unattended (`init` takes deterministic defaults without a
+TTY, `prepare --yes`, `create`, `status`, first `deploy`/`claim` with
+`--storage-password-file`, `unlock --password-file`, `recover --mnemonic-file
+--new-password-file`, `rollback --to`, `destroy --force`). Three steps involve a
+human:
 
-- **First deploy / `claim`** — always requires terminal stdin (the one-time
-  recovery mnemonic is delivered to that session; `--password-file`/
-  `--storage-password-file` only replace the password prompt and make recorded
-  output safe). Give the operator the deploy command to run in their shell; the
-  mnemonic auto-stores in the protected keystore — follow with `enclava key
-  backup --out <file>`.
 - **`key setup`** (fresh org, before the first `create`) — passphrase prompt is
   scriptable (`--passphrase-file`/`--new-passphrase-file`), but the `--backup-out`
   file is owner signing material: have the operator choose where it goes.
 - **`login`** — run `login --no-browser`, print the URL and code, wait for the
   operator to approve in the browser. The device code is short-lived and
   single-use, so showing it is fine — don't redact it or warn about it.
+- **Recovery-material storage** — the first deploy/claim runs fully unattended with
+  `--storage-password-file`, but it *creates* owner secrets: the one-time recovery
+  mnemonic lands in the protected local keystore. Right after the first deploy, run
+  `enclava key backup --out <file>` and have the operator keep that file durable.
 
 Rule of thumb: any step that *creates owner secrets* (the claim mnemonic, a key
 setup backup, a recovery export) ends with a human storing them; do not invent
@@ -163,6 +176,7 @@ app's trust properties, use `enclava-verify`.
 | `destroy` returns `app mutation already in progress` (409) | An in-flight deployment holds the mutation lease — wait for it to finish (check `status`), then retry. |
 | Browser rejects the app cert (`ERR_CERT_AUTHORITY_INVALID`) | Some environments serve a Let's Encrypt staging cert — a platform toggle, not an app fault. |
 | Unlock "did not complete" right after a deploy | The background unlock may still be running — trust `enclava status` over the CLI exit message. |
+| `error: this step would prompt for input in a non-interactive session` | A prompt was needed but prompting is off — pass the flag the message names (and `--no-input` on every automated run). |
 
 ## Going deeper
 
