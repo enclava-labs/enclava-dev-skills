@@ -128,6 +128,9 @@ as `create`, generic `deploy`, `config set`, and `auto-unlock` instead require l
   app's data volumes; its default double confirmation (yes/no, then type the app
   name) exists to stop accidents. Never add `--force` on your own initiative.
 
+The [developer docs' CLI reference](https://docs.enclava.dev/reference/cli-reference)
+carries the full flag list and the same automation contract.
+
 ## Attended steps and handoffs
 
 Most commands run fully unattended (`init` takes deterministic defaults without a

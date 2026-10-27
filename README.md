@@ -3,9 +3,8 @@
 Agent-facing skills for the Enclava platform. The [developer docs](https://docs.enclava.dev)
 ([`enclava-dev-docs`](https://github.com/enclava-labs/enclava-dev-docs)) explain *what* things are, for humans reading end
 to end. These
-skills encode *how to operate* — procedures, contracts, and failure triage — in the open `SKILL.md` format (a folder with a YAML-frontmattered `SKILL.md`;
-understood by Claude Code, Cursor, Codex, pi, and other coding agents) that coding
-agents load on demand. If you deploy or manage enclava apps through an agent (Claude Code, Cursor,
+skills encode *how to operate* — procedures, contracts, and failure triage — in the open `SKILL.md` format (a folder with a YAML-frontmattered `SKILL.md`)
+that coding agents load on demand. If you deploy or manage enclava apps through an agent (Claude Code, Cursor,
 Codex, pi, …), install these so the agent gets the platform's real operational
 contract instead of guessing.
 
