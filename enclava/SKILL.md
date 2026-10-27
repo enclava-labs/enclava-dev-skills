@@ -177,6 +177,7 @@ app's trust properties, use `enclava-verify`.
 | Browser rejects the app cert (`ERR_CERT_AUTHORITY_INVALID`) | Some environments serve a Let's Encrypt staging cert — a platform toggle, not an app fault. |
 | Unlock "did not complete" right after a deploy | The background unlock may still be running — trust `enclava status` over the CLI exit message. |
 | `error: this step would prompt for input in a non-interactive session` | A prompt was needed but prompting is off — pass the flag the message names (and `--no-input` on every automated run). |
+| `error: an interactive terminal or --password-file <PATH> is required to provide the … non-interactively` | A secret was needed without its file flag — pass the `--*-file` flag the message names. |
 
 ## Going deeper
 
