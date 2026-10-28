@@ -50,6 +50,8 @@ or unexpected username is rejected rather than shown. Use `--json` when scriptin
 enclava status --app shell
 ```
 
+Add `--json` for scripted checks (stable shape; `null` means not verified).
+
 Hosted apps have no local `enclava.toml`. For commands that support `--app` — such as
 `status`, `logs`, `unlock`, `recover`, and `destroy` — pass the hosted name explicitly.
 Not every app operation supports that flag: `config set` and `auto-unlock` always load
