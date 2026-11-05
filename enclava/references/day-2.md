@@ -28,7 +28,9 @@ enclava log-key generate --app NAME --key-id logs-laptop-2026q3
 enclava logs --app NAME -f --log-private-key-file <private-key-file>
 ```
 
-`log-key list/select/revoke` manage the registered keys. Losing the private key means
+`log-key list/select/revoke` manage the registered keys (`log-key list --json` for
+scripted inventories — one key-entry shape for both app- and org-scoped views).
+Losing the private key means
 losing log access (data itself is unaffected).
 
 ## Config secrets
@@ -36,7 +38,7 @@ losing log access (data itself is unaffected).
 ```bash
 enclava config set FEATURE_FLAG=enabled  # multiple KEY=VALUE pairs; no --app
                                           # resolves local enclava.toml only
-enclava config get [--app NAME]           # lists key NAMES only
+enclava config get [--app NAME] [--json]   # lists key NAMES only
 enclava config unset FEATURE_FLAG [--app NAME]
 ```
 
@@ -53,7 +55,7 @@ persist or return their plaintext.
 enclava domains add app.example.com --app NAME   # returns a TXT challenge
 # publish the TXT record at your DNS, then:
 enclava domains verify app.example.com --app NAME
-enclava domains list --app NAME
+enclava domains list --app NAME [--json]
 enclava domains remove app.example.com --app NAME
 ```
 
@@ -84,7 +86,7 @@ copy of the password. Practical rules:
 
 1. **After the first deploy/claim**:
    `enclava key backup --out "$HOME/.enclava/my-app-recovery.json"`. Verify with
-   `enclava key status` what's covered locally.
+   `enclava key status [--json]` what's covered locally.
 2. **Lost password, have mnemonic**:
    ```bash
    enclava recover --app NAME --mnemonic-file M --new-password-file P

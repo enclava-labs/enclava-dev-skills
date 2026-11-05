@@ -97,12 +97,12 @@ design — the app remains in the deleting state and stays wired.
 
 | Area | Commands |
 | --- | --- |
-| Auth | Hosted/device flow: `login [--api-url] [--no-browser] [--org] [--approve-logs] [--replace-session]`, `whoami`, `logout`. Standalone CAP only: `signup`, `login --nostr`, `login --email` (their credential prompts have flag forms — `--email-address`/`--password-file`, `--npub`/`--nsec-file`; `--email` and `--nostr` are mutually exclusive). |
+| Auth | Hosted/device flow: `login [--api-url] [--no-browser] [--org] [--approve-logs] [--replace-session]`, `whoami [--json]`, `logout`. Standalone CAP only: `signup`, `login --nostr`, `login --email` (their credential prompts have flag forms — `--email-address`/`--password-file`, `--npub`/`--nsec-file`; `--email` and `--nostr` are mutually exclusive). |
 | Scaffold | `init [--app-name NAME] [--port PORT]` (prompts when interactive; validates the name — leading letter, `[a-z0-9-]`, no consecutive hyphens, ≤63 — before writing anything), `prepare [--yes]` (`--yes` skips the update-existing-files confirmation; without it a non-interactive run refuses and names `--yes`) |
 | Deploy | `create [--image] [--signer-subject] [--signer-issuer]`, `deploy --image IMG@DIGEST [--set K=V] [--set-file K=PATH] [--storage-password-file PATH]` |
 | Observe | `status [--app] [--json]`, `logs [--app] [-f] [--log-private-key-file PATH]`, `log-key generate/list/select/revoke` |
-| Config | `config set K=V…` (local `enclava.toml`; no `--app`), `config get` (names only), `config unset K` |
-| Templates | `template list`, `template deploy [slug] --name N [--ssh-public-key-file PATH]`, `template ssh-command --name N --wait [--json]` |
+| Config | `config set K=V…` (local `enclava.toml`; no `--app`), `config get [--json]` (names only), `config unset K` |
+| Templates | `template list [--json]`, `template deploy [slug] --name N [--ssh-public-key-file PATH]`, `template ssh-command --name N --wait [--json]` |
 | Ownership | `claim`, `unlock`, `recover`, `change-password`, `auto-unlock enable/disable` |
 | Lifecycle | `rollback [--to ID]` (without `--to` it confirms the default target), `destroy [--app] [--force] [--abandon-teardown]` |
 | Global | `--no-input` (env `ENCLAVA_NO_INPUT`) on any command: never prompt — take defaults or fail naming the flag that replaces the prompt |
@@ -122,8 +122,12 @@ as `create`, generic `deploy`, `config set`, and `auto-unlock` instead require l
   the flag it names.
 - **Every interactive input has a flag alternative**; secrets come from `--*-file`
   paths, never process arguments.
-- **Read state with `enclava status [--app] --json`** (stable shape; `null` means
-  "not verified", never a verified-looking value).
+- **Read state with `--json` on data-returning commands** — `status [--app]`,
+  `whoami`, `config get`, `log-key list`, `template list`, `key status` (and
+  `domains list` where custom domains are enabled): stable shapes — every key
+  always present, absent or unverified values `null`, never a verified-looking
+  value. `log-key list` uses one key-entry shape for both its app- and
+  org-scoped views.
 - **`destroy --force` only on explicit user instruction.** `destroy` deletes the
   app's data volumes; its default double confirmation (yes/no, then type the app
   name) exists to stop accidents. Never add `--force` on your own initiative.

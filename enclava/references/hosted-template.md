@@ -9,7 +9,7 @@ If a template matches the need, this is less work than the manual OCI path
 
 ```bash
 enclava login            # browser device flow; whoami to confirm org context
-enclava template list
+enclava template list [--json]
 ```
 
 ## 2. Deploy `debian-ssh-frp` (confidential SSH box)
