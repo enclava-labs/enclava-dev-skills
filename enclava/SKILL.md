@@ -124,9 +124,10 @@ as `create`, generic `deploy`, `config set`, and `auto-unlock` instead require l
   paths, never process arguments.
 - **Read state with `--json` on data-returning commands** — `status [--app]`,
   `whoami`, `config get`, `log-key list`, `template list`, `key status` (and
-  `domains list` where custom domains are enabled): stable shapes; `null` means
-  "not verified", never a verified-looking value. `log-key list` uses one
-  key-entry shape for both its app- and org-scoped views.
+  `domains list` where custom domains are enabled): stable shapes — every key
+  always present, absent or unverified values `null`, never a verified-looking
+  value. `log-key list` uses one key-entry shape for both its app- and
+  org-scoped views.
 - **`destroy --force` only on explicit user instruction.** `destroy` deletes the
   app's data volumes; its default double confirmation (yes/no, then type the app
   name) exists to stop accidents. Never add `--force` on your own initiative.

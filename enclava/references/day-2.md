@@ -38,7 +38,7 @@ losing log access (data itself is unaffected).
 ```bash
 enclava config set FEATURE_FLAG=enabled  # multiple KEY=VALUE pairs; no --app
                                           # resolves local enclava.toml only
-enclava config get [--app NAME] [--json]     # lists key NAMES only
+enclava config get [--app NAME] [--json]   # lists key NAMES only
 enclava config unset FEATURE_FLAG [--app NAME]
 ```
 
