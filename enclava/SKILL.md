@@ -48,6 +48,9 @@ against observed behavior or the current implementation.
 - The mnemonic is shown **once** at claim time. By default the CLI persists it locally
   so `enclava key backup` covers it; export a backup outside the project immediately
   after the first deploy (`enclava key backup --out "$HOME/.enclava/my-app-recovery.json"`).
+  The backup is an **org-scoped snapshot** — keystore seed plus every app mnemonic stored
+  at that moment — so re-run it after **each new claim**; the latest file is the only one
+  you need (earlier backups omit apps claimed later).
 - If a password-mode app has neither a usable password nor a recovery mnemonic/backup,
   the platform cannot recover its data. Auto-unlock is not a substitute for an owner
   backup.

@@ -85,8 +85,10 @@ The mnemonic is an independent recovery representation of the owner seed — not
 copy of the password. Practical rules:
 
 1. **After the first deploy/claim**:
-   `enclava key backup --out "$HOME/.enclava/my-app-recovery.json"`. Verify with
-   `enclava key status [--json]` what's covered locally.
+   `enclava key backup --out "$HOME/.enclava/my-app-recovery.json"` — the backup
+   snapshots the whole org keystore (deploy keys + every stored app mnemonic), so
+   re-run it after **every new app claim**; earlier backups omit apps claimed later.
+   Verify with `enclava key status [--json]` what's covered locally.
 2. **Lost password, have mnemonic**:
    ```bash
    enclava recover --app NAME --mnemonic-file M --new-password-file P
