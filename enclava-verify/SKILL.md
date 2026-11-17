@@ -86,7 +86,10 @@ workflow:
 
 A pinned policy encodes those launch, runtime, artifact, identity, and authority
 expectations plus revocation limits and required checks. Use a known-good example only
-for schema shape; source every trust value independently.
+for schema shape; source every trust value independently. A worked walkthrough
+against a live target (skeleton → independent checks table → verify → CI gate) ships
+in the attested-rng example:
+https://github.com/enclava-labs/confidential-app-examples/tree/main/attested-rng
 
 ## Practical guidance
 

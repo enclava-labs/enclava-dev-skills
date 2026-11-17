@@ -1,7 +1,10 @@
 # Journey: deploy a custom OCI image (manual CAP path)
 
 For teams running their own container image. If a hosted template already fits the
-workload, that path (`hosted-template.md`) is much less work.
+workload, that path (`hosted-template.md`) is much less work. Complete runnable
+examples — a minimal lifecycle app and an attested randomness service with a
+trust-policy walkthrough — live at
+https://github.com/enclava-labs/confidential-app-examples.
 
 ## Prerequisites
 
